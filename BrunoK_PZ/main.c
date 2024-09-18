@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int brojKonverzija = 0;  // Globalna varijabla za brojanje uspješnih konverzija
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
 
-    // Brišemo datoteku "rezultati.txt" na početku programa
     remove("rezultati.txt");
 
     Valuta* valute = malloc(MAX_VALUTE * sizeof(Valuta));
@@ -19,7 +20,6 @@ int main() {
 
     ucitajValuteIzDatoteke("valute.txt", valute, &brojValuta);
 
-    // Sortiraj valute po abecednom redu
     qsort(valute, brojValuta, sizeof(Valuta), compareValute);
 
     int izborIzvora = -1, izborCilja = -1;
@@ -36,21 +36,21 @@ int main() {
                 break;
             }
             printf("\n\nNeispravan unos. Molimo unesite ponovno.\n");
-            while (getchar() != '\n'); // Clear input buffer
+            while (getchar() != '\n');
             continue;
         }
 
         if (izborIzvora == 0 || izborCilja == 0) {
-            printf("Hvala na koristenju naseg konvertera valuta!\n"); 
-            fflush(stdout);  
+            printf("Hvala na koristenju naseg konvertera valuta!\n");
+            fflush(stdout);
             break;
         }
 
         if (izborIzvora == -1) {
             printf("Unesite ime valute za pretrazivanje: ");
-            while (getchar() != '\n'); // Clear input buffer
+            while (getchar() != '\n');
             if (fgets(imeValute, sizeof(imeValute), stdin) != NULL) {
-                imeValute[strcspn(imeValute, "\n")] = '\0'; // Remove newline character from the end of the input
+                imeValute[strcspn(imeValute, "\n")] = '\0';
                 Valuta* rezultat = pretraziValutu(valute, brojValuta, imeValute);
                 if (rezultat != NULL) {
                     printf("Pronadena valuta: %s (%s) - Tecaj: %.2f\n", rezultat->ime, rezultat->skracenica, rezultat->tecaj);
@@ -69,20 +69,20 @@ int main() {
                 break;
             }
             printf("\n\nNeispravan unos. Molimo unesite ponovno.\n");
-            while (getchar() != '\n'); // Clear input buffer
+            while (getchar() != '\n');
             continue;
         }
 
         if (izborCilja == 0) {
             printf("Hvala što ste koristili naš konverter valuta!\n");
-            fflush(stdout); // Očisti buffer i odmah ispiši poruku
+            fflush(stdout);
             break;
         }
 
         printf("Unesite iznos za konverziju: ");
         if (scanf("%lf", &iznos) != 1 || iznos <= 0) {
             printf("\n\nNeispravan unos. Molimo unesite ponovno.\n");
-            while (getchar() != '\n'); // Clear input buffer
+            while (getchar() != '\n');
             continue;
         }
 
@@ -91,20 +91,29 @@ int main() {
             continue;
         }
 
-        printf("\n%.2f %s je ekvivalentno %.2f %s.\n", iznos, valute[izborIzvora - 1].skracenica, iznosCilja, valute[izborCilja - 1].skracenica);
-
-        zapisiRezultatUDatoteku("rezultati.txt", iznos, valute[izborIzvora - 1].skracenica, iznosCilja, valute[izborCilja - 1].skracenica);
+        if (iznosCilja > 0) {
+            printf("\n%.2f %s je ekvivalentno %.2f %s.\n", iznos, valute[izborIzvora - 1].skracenica, iznosCilja, valute[izborCilja - 1].skracenica);
+            zapisiRezultatUDatoteku("rezultati.txt", iznos, valute[izborIzvora - 1].skracenica, iznosCilja, valute[izborCilja - 1].skracenica);
+            brojKonverzija++;  // Povećaj broj uspješnih konverzija
+        }
 
     } while (izborIzvora != 0 && izborCilja != 0);
 
+    printf("\nUkupan broj uspjesnih konverzija: %d\n", brojKonverzija);
+
     azurirajValute("valute.txt", valute, brojValuta);
+
+    long velicinaDatoteke = dohvatiVelicinuDatoteke("valute.txt");
+    if (velicinaDatoteke != -1) {
+        printf("Velicina datoteke 'valute.txt' je: %ld bajtova\n", velicinaDatoteke);
+    }
 
     for (int i = 0; i < brojValuta; i++) {
         sigurnoOslobodi(valute[i].skracenica);
         sigurnoOslobodi(valute[i].ime);
     }
     free(valute);
-    valute = NULL; // Osiguranje da se glavni pokazivač postavi na NULL
+    valute = NULL;
 
     return 0;
 }

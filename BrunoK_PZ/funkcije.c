@@ -4,14 +4,19 @@
 #include <stdio.h>
 #include <string.h>
 
-// Local functions with static keyword
-static inline void swapValuta(Valuta* a, Valuta* b) {
-    Valuta temp = *a;
-    *a = *b;
-    *b = temp;
+
+
+inline void swapValuta(Valuta* v1, Valuta* v2) {
+    if (v1 == NULL || v2 == NULL) {
+        printf("Pogreška: NULL pokazivač u swapValuta funkciji.\n");
+        return;
+    }
+    Valuta temp = *v1;
+    *v1 = *v2;
+    *v2 = temp;
 }
 
-int compareValute(const void* a, const void* b) {
+inline int compareValute(const void* a, const void* b) {
     Valuta* valutaA = (Valuta*)a;
     Valuta* valutaB = (Valuta*)b;
     return strcmp(valutaA->ime, valutaB->ime);
@@ -24,10 +29,9 @@ static int compareValuteForSearch(const void* a, const void* b) {
     return strcmp(ime, valuta->ime);
 }
 
-// Function implementations
 void ispisiIzbornik(Valuta valute[], int brojValuta) {
     printf("\n+---------------------------------------------------------------------+");
-    printf("\n|                     KONVERTER VALUTA:                               |");
+    printf("\n|                     KONVERTER VALUTA:                 |");
     printf("\n+---------------------------------------------------------------------+");
     printf("\n| %-4s %-60s |", "REDNI", "VALUTA");
     printf("\n+---------------------------------------------------------------------+");
@@ -84,7 +88,7 @@ void quickSort(Valuta valute[], int left, int right) {
     }
 }
 
-int partition(Valuta valute[], int left, int right) {
+inline int partition(Valuta valute[], int left, int right) {
     Valuta pivot = valute[right];
     int i = left - 1;
 
@@ -99,22 +103,35 @@ int partition(Valuta valute[], int left, int right) {
     return i + 1;
 }
 
-Valuta* pretraziValutuRekurzivno(Valuta valute[], int low, int high, const char* ime) {
-    if (low <= high) {
-        int mid = low + (high - low) / 2;
+Valuta* pretraziValutuRekurzivno(Valuta* valute, int low, int high, const char* ime) {
+    if (valute == NULL || ime == NULL) {
+        printf("Pogreška: NULL pokazivač u pretraziValutuRekurzivno funkciji.\n");
+        return NULL;
+    }
+    if (low > high) return NULL;
 
-        int cmp = strcmp(valute[mid].ime, ime);
-        if (cmp == 0)
-            return &valute[mid];
-        else if (cmp < 0)
-            return pretraziValutuRekurzivno(valute, mid + 1, high, ime);
-        else
-            return pretraziValutuRekurzivno(valute, low, mid - 1, ime);
+    int mid = (low + high) / 2;
+    int cmp = strcmp(valute[mid].ime, ime);
+
+    if (cmp == 0) {
+        return &valute[mid];
+    }
+    else if (cmp < 0) {
+        return pretraziValutuRekurzivno(valute, mid + 1, high, ime);
+    }
+    else {
+        return pretraziValutuRekurzivno(valute, low, mid - 1, ime);
     }
     return NULL;
 }
 
+
 void zapisiRezultatUDatoteku(const char* datoteka, double iznos, const char* izvornaValuta, double iznosCilja, const char* ciljnaValuta) {
+    if (datoteka == NULL || izvornaValuta == NULL || ciljnaValuta == NULL) {
+        printf("Greška: Neispravan pokazivač.\n");
+        return;
+    }
+
     FILE* dat = fopen(datoteka, "a");
     if (dat == NULL) {
         printf("Nije moguće otvoriti datoteku za pisanje.\n");
@@ -125,8 +142,12 @@ void zapisiRezultatUDatoteku(const char* datoteka, double iznos, const char* izv
     fclose(dat);
 }
 
-
 void azurirajValute(const char* datoteka, Valuta* valute, int brojValuta) {
+    if (datoteka == NULL || valute == NULL) {
+        printf("Greška: Neispravan pokazivač.\n");
+        return;
+    }
+
     FILE* dat = fopen(datoteka, "w");
     if (dat == NULL) {
         perror("Nije moguće otvoriti datoteku za pisanje");
@@ -134,6 +155,10 @@ void azurirajValute(const char* datoteka, Valuta* valute, int brojValuta) {
     }
 
     for (int i = 0; i < brojValuta; i++) {
+        if (valute[i].skracenica == NULL || valute[i].ime == NULL) {
+            printf("Greška: Neispravan pokazivač za valutu.\n");
+            continue;
+        }
         fprintf(dat, "%s %lf %s\n", valute[i].skracenica, valute[i].tecaj, valute[i].ime);
     }
 
@@ -143,6 +168,7 @@ void azurirajValute(const char* datoteka, Valuta* valute, int brojValuta) {
 
     fclose(dat);
 }
+
 
 void kopirajDatoteku(const char* izvornaDatoteka, const char* ciljnaDatoteka) {
     FILE* izvor = fopen(izvornaDatoteka, "r");
@@ -184,10 +210,48 @@ void sigurnoOslobodi(char* p) {
     }
 }
 
-Valuta* pretraziValutu(Valuta valute[], int brojValuta, const char* ime) {
-    return (Valuta*)bsearch(ime, valute, brojValuta, sizeof(Valuta), compareValuteForSearch);
+// Funkcija za dobivanje veličine datoteke
+long dohvatiVelicinuDatoteke(const char* datoteka) {
+    FILE* dat = fopen(datoteka, "r");
+    if (dat == NULL) {
+        perror("Nije moguće otvoriti datoteku za dobivanje veličine");
+        return -1;
+    }
+
+    // Korištenje fseek i ftell za dobivanje veličine
+    if (fseek(dat, 0, SEEK_END) != 0) {
+        perror("Pogreška prilikom pozicioniranja na kraj datoteke");
+        fclose(dat);
+        return -1;
+    }
+
+    long velicina = ftell(dat); // Vraća trenutnu poziciju (veličinu datoteke)
+    if (velicina == -1L) {
+        perror("Pogreška prilikom dobivanja veličine datoteke");
+        fclose(dat);
+        return -1;
+    }
+
+    rewind(dat); // Korištenje rewind da se vrati na početak datoteke
+    fclose(dat);
+    return velicina;
+}
+
+Valuta* pretraziValutu(Valuta* valute, int brojValuta, const char* ime) {
+    if (valute == NULL || ime == NULL) {
+        printf("Pogreška: NULL pokazivač u pretraziValutu funkciji.\n");
+        return NULL;
+    }
+    for (int i = 0; i < brojValuta; i++) {
+        if (strcmp(valute[i].ime, ime) == 0) {
+            return &valute[i];
+        }
+    }
+    return NULL;
 }
 
 double pretvoriIznos(double iznos, double tecajIzvora, double tecajCilja) {
     return iznos * (tecajCilja / tecajIzvora);
 }
+
+
