@@ -1,0 +1,10 @@
+USD 1.090000 Americki Dolar
+AUD 1.640000 Australski Dolar
+GBP 0.850000 Britanska Funta
+CZK 24.670000 Ceška Kruna
+EUR 1.000000 Euro
+JPY 169.590000 Japanski Jen
+CAD 1.490000 Kanadski Dolar
+CNY 7.870000 Kineski Juan
+HUF 392.520000 Mađarska Forinta
+CHF 0.970000 Svicarski Franak
