@@ -16,7 +16,7 @@ typedef struct {
 
 // Funkcije za rad sa valutama
 void ispisiIzbornik(Valuta valute[], int brojValuta);
-
+int isNumber(const char* s);
 extern void ucitajValuteIzDatoteke(const char* datoteka, Valuta* valute, int* brojValuta);
 extern double pretvoriIznos(double iznos, double tecajIzvora, double tecajCilja);
 

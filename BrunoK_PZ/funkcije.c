@@ -170,6 +170,21 @@ void azurirajValute(const char* datoteka, Valuta* valute, int brojValuta) {
 }
 
 
+int isNumber(const char* s) {
+    if (s == NULL || *s == '\0') {
+        return 0;
+    }
+    char* p = (char*)s;
+    while (*p) {
+        if (!isdigit(*p)) {
+            return 0;
+        }
+        p++;
+    }
+    return 1;
+}
+
+
 void kopirajDatoteku(const char* izvornaDatoteka, const char* ciljnaDatoteka) {
     FILE* izvor = fopen(izvornaDatoteka, "r");
     if (izvor == NULL) {

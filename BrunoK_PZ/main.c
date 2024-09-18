@@ -3,6 +3,8 @@
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 int brojKonverzija = 0;  // Globalna varijabla za brojanje uspješnih konverzija
 
@@ -22,6 +24,7 @@ int main() {
 
     qsort(valute, brojValuta, sizeof(Valuta), compareValute);
 
+    char izborIzvoraStr[100], izborCiljaStr[100];
     int izborIzvora = -1, izborCilja = -1;
     double iznos;
     char imeValute[MAX_IME + 1];
@@ -29,26 +32,20 @@ int main() {
     do {
         ispisiIzbornik(valute, brojValuta);
 
-        printf("\n\nOdaberite izvornu valutu (0 za izlaz, -1 za pretrazivanje): ");
-        if (scanf("%d", &izborIzvora) != 1 || izborIzvora < -1 || izborIzvora > brojValuta) {
-            if (feof(stdin)) {
-                printf("\n\nNema više dostupnih valuta.\n");
-                break;
-            }
-            printf("\n\nNeispravan unos. Molimo unesite ponovno.\n");
-            while (getchar() != '\n');
+        printf("\n\nOdaberite izvornu valutu (0 za izlaz, 's' za pretrazivanje): ");
+        if (fgets(izborIzvoraStr, sizeof(izborIzvoraStr), stdin) == NULL) {
+            printf("\n\nPogreška prilikom čitanja unosa.\n");
             continue;
         }
+        izborIzvoraStr[strcspn(izborIzvoraStr, "\n")] = '\0'; // Ukloni novi red
 
-        if (izborIzvora == 0 || izborCilja == 0) {
+        if (strcmp(izborIzvoraStr, "0") == 0) {
             printf("Hvala na koristenju naseg konvertera valuta!\n");
             fflush(stdout);
             break;
         }
-
-        if (izborIzvora == -1) {
+        else if (strcmp(izborIzvoraStr, "s") == 0 || strcmp(izborIzvoraStr, "S") == 0) {
             printf("Unesite ime valute za pretrazivanje: ");
-            while (getchar() != '\n');
             if (fgets(imeValute, sizeof(imeValute), stdin) != NULL) {
                 imeValute[strcspn(imeValute, "\n")] = '\0';
                 Valuta* rezultat = pretraziValutu(valute, brojValuta, imeValute);
@@ -61,43 +58,61 @@ int main() {
             }
             continue;
         }
-
-        printf("Odaberite ciljnu valutu (0 za izlaz): ");
-        if (scanf("%d", &izborCilja) != 1 || izborCilja < 0 || izborCilja > brojValuta) {
-            if (feof(stdin)) {
-                printf("\n\nNema više dostupnih valuta.\n");
-                break;
+        else if (isNumber(izborIzvoraStr)) {
+            izborIzvora = atoi(izborIzvoraStr);
+            if (izborIzvora < 1 || izborIzvora > brojValuta) {
+                printf("\n\nNeispravan unos. Molimo unesite broj izmedu 1 i %d.\n", brojValuta);
+                continue;
             }
-            printf("\n\nNeispravan unos. Molimo unesite ponovno.\n");
-            while (getchar() != '\n');
+        }
+        else {
+            printf("\n\nNeispravan unos. Molimo unesite broj ili 's' za pretrazivanje.\n");
             continue;
         }
 
-        if (izborCilja == 0) {
+        // Odabir ciljne valute
+        printf("Odaberite ciljnu valutu (0 za izlaz): ");
+        if (fgets(izborCiljaStr, sizeof(izborCiljaStr), stdin) == NULL) {
+            printf("\n\nPogreška prilikom čitanja unosa.\n");
+            continue;
+        }
+        izborCiljaStr[strcspn(izborCiljaStr, "\n")] = '\0'; // Ukloni novi red
+
+        if (strcmp(izborCiljaStr, "0") == 0) {
             printf("Hvala što ste koristili naš konverter valuta!\n");
             fflush(stdout);
             break;
         }
+        else if (isNumber(izborCiljaStr)) {
+            izborCilja = atoi(izborCiljaStr);
+            if (izborCilja < 1 || izborCilja > brojValuta) {
+                printf("\n\nNeispravan unos. Molimo unesite broj između 1 i %d.\n", brojValuta);
+                continue;
+            }
+        }
+        else {
+            printf("\n\nNeispravan unos. Molimo unesite broj.\n");
+            continue;
+        }
 
         printf("Unesite iznos za konverziju: ");
         if (scanf("%lf", &iznos) != 1 || iznos <= 0) {
-            printf("\n\nNeispravan unos. Molimo unesite ponovno.\n");
+            printf("\n\nNeispravan unos. Molimo unesite pozitivni broj.\n");
             while (getchar() != '\n');
             continue;
         }
+        while (getchar() != '\n'); // Očisti ulazni spremnik
 
         double iznosCilja = pretvoriIznos(iznos, valute[izborIzvora - 1].tecaj, valute[izborCilja - 1].tecaj);
         if (iznosCilja < 0) {
             continue;
         }
 
-        if (iznosCilja > 0) {
-            printf("\n%.2f %s je ekvivalentno %.2f %s.\n", iznos, valute[izborIzvora - 1].skracenica, iznosCilja, valute[izborCilja - 1].skracenica);
-            zapisiRezultatUDatoteku("rezultati.txt", iznos, valute[izborIzvora - 1].skracenica, iznosCilja, valute[izborCilja - 1].skracenica);
-            brojKonverzija++;  // Povećaj broj uspješnih konverzija
-        }
+        printf("\n%.2f %s je ekvivalentno %.2f %s.\n", iznos, valute[izborIzvora - 1].skracenica, iznosCilja, valute[izborCilja - 1].skracenica);
+        zapisiRezultatUDatoteku("rezultati.txt", iznos, valute[izborIzvora - 1].skracenica, iznosCilja, valute[izborCilja - 1].skracenica);
+        brojKonverzija++;  // Povećaj broj uspješnih konverzija
 
-    } while (izborIzvora != 0 && izborCilja != 0);
+    } while (1);
 
     printf("\nUkupan broj uspjesnih konverzija: %d\n", brojKonverzija);
 
